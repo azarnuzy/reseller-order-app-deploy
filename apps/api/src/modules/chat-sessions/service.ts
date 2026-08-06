@@ -28,3 +28,16 @@ export async function requireOwnedChatSession(
 
   return session;
 }
+
+export async function requireChatSessionOwner(sessionId: string): Promise<string> {
+  const session = await prisma.chatSession.findUnique({
+    where: { id: sessionId },
+    select: { userId: true },
+  });
+
+  if (!session) {
+    throw new HttpError(404, "SESSION_NOT_FOUND", "Chat session was not found.");
+  }
+
+  return session.userId;
+}

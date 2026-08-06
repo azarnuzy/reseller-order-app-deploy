@@ -1,7 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
-import { anonymousUserId } from "../../anonymous-user";
 import { invalidRequest } from "../../request-validation";
+import { requireChatSessionOwner } from "../chat-sessions/service";
 import { confirmOrderSchema, orderParamsSchema } from "./schema";
 import { confirmOrder, getOrder } from "./service";
 
@@ -11,11 +11,9 @@ export const ordersRouter = new Hono()
     zValidator("param", orderParamsSchema.omit({ orderNumber: true }), invalidRequest),
     zValidator("json", confirmOrderSchema, invalidRequest),
     async (c) => {
-      const result = await confirmOrder(
-        c.req.valid("param").sessionId,
-        anonymousUserId,
-        c.req.valid("json").draftVersion,
-      );
+      const { sessionId } = c.req.valid("param");
+      const userId = await requireChatSessionOwner(sessionId);
+      const result = await confirmOrder(sessionId, userId, c.req.valid("json").draftVersion);
       return c.json(result, 200);
     },
   )
@@ -24,6 +22,7 @@ export const ordersRouter = new Hono()
     zValidator("param", orderParamsSchema, invalidRequest),
     async (c) => {
       const { orderNumber, sessionId } = c.req.valid("param");
-      return c.json({ order: await getOrder(sessionId, anonymousUserId, orderNumber) }, 200);
+      const userId = await requireChatSessionOwner(sessionId);
+      return c.json({ order: await getOrder(sessionId, userId, orderNumber) }, 200);
     },
   );
