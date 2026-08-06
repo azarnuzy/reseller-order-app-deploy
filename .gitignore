@@ -8,3 +8,5 @@ build
 !.env.example
 coverage
 artifacts
+docs/*
+plan.md
