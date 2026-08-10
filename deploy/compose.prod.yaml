@@ -1,4 +1,4 @@
-name: refactor-reseller-app
+name: reseller-app
 
 x-api-environment: &api-environment
   NODE_ENV: production
@@ -93,7 +93,7 @@ services:
     networks:
       proxy:
         aliases:
-          - refactor-reseller-api
+          - reseller-app-api
       internal:
 
   platform:
@@ -113,7 +113,7 @@ services:
     networks:
       proxy:
         aliases:
-          - refactor-reseller-platform
+          - reseller-app-platform
 
 volumes:
   postgres_data:

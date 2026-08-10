@@ -26,15 +26,15 @@ The base VPS, Docker, shared `proxy` network, and global Caddy must already exis
 Create the application directory on the VPS:
 
 ```bash
-sudo install -d -o "$USER" -g "$USER" -m 0750 /srv/apps/refactor-reseller-app
-cd /srv/apps/refactor-reseller-app
+sudo install -d -o "$USER" -g "$USER" -m 0750 /srv/apps/reseller-app
+cd /srv/apps/reseller-app
 ```
 
 From a local clone of this repository, copy the template to the VPS:
 
 ```bash
 scp deploy/env.production.example \
-  tencent-lighthouse:/srv/apps/refactor-reseller-app/env.production
+  tencent-lighthouse:/srv/apps/reseller-app/env.production
 ```
 
 Then replace every placeholder on the VPS. Generate a URL-safe database password with:
@@ -47,11 +47,11 @@ Use that same value in `POSTGRES_PASSWORD` and the password portion of `DATABASE
 the file:
 
 ```bash
-chmod 600 /srv/apps/refactor-reseller-app/env.production
+chmod 600 /srv/apps/reseller-app/env.production
 ```
 
 The deployment script applies committed Prisma migrations on every release. On the first successful
-deployment only, it runs the fixture seed and creates `/srv/apps/refactor-reseller-app/.seeded`.
+deployment only, it runs the fixture seed and creates `/srv/apps/reseller-app/.seeded`.
 Do not remove that marker unless the PostgreSQL volume has been intentionally recreated and needs
 fresh fixture data.
 
@@ -67,8 +67,8 @@ import /etc/caddy/apps/*.caddy
 From a local clone of this repository, install this application's snippet:
 
 ```bash
-scp deploy/refactor-reseller-app.caddy \
-  tencent-lighthouse:/srv/proxy/apps/refactor-reseller-app.caddy
+scp deploy/reseller-app.caddy \
+  tencent-lighthouse:/srv/proxy/apps/reseller-app.caddy
 ```
 
 Then validate and reload it on the VPS:
@@ -103,7 +103,7 @@ Create a dedicated key locally, install only its public key on the VPS, and stor
 GitHub:
 
 ```bash
-ssh-keygen -t ed25519 -f ./tencent-gh-actions -C "github-actions-refactor-reseller-app"
+ssh-keygen -t ed25519 -f ./tencent-gh-actions -C "github-actions-reseller-app"
 ssh-copy-id -i ./tencent-gh-actions.pub ubuntu@YOUR_VPS_IP
 ssh-keyscan -H YOUR_VPS_IP
 ```
@@ -125,7 +125,7 @@ failed deploy job. Future deployments need no GHCR credentials on the VPS.
 Check the deployed release:
 
 ```bash
-cd /srv/apps/refactor-reseller-app
+cd /srv/apps/reseller-app
 docker compose --env-file env.production --env-file .release.env -f compose.prod.yaml ps
 curl --fail https://api.reseller.azarnuzy.com/health
 curl --fail --head https://reseller.azarnuzy.com
@@ -134,7 +134,7 @@ curl --fail --head https://reseller.azarnuzy.com
 Roll back application images to an earlier commit SHA:
 
 ```bash
-cd /srv/apps/refactor-reseller-app
+cd /srv/apps/reseller-app
 ./deploy.sh PREVIOUS_FULL_COMMIT_SHA
 ```
 
