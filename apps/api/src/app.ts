@@ -9,6 +9,7 @@ import { ordersRouter } from "./modules/orders/router";
 import { productsRouter } from "./modules/products/router";
 import { profileRouter } from "./modules/profile/router";
 import { storefrontRouter } from "./modules/storefront/router";
+import { whatsappRouter } from "./modules/whatsapp/router";
 
 export const app = new Hono()
   .use(
@@ -29,6 +30,7 @@ export const app = new Hono()
   .route("/api/chat/sessions", chatRouter)
   .route("/api/chat/sessions", draftsRouter)
   .route("/api/chat/sessions", ordersRouter)
+  .route("/api/whatsapp", whatsappRouter)
   .notFound((c) => {
     return c.json({ error: { code: "NOT_FOUND", message: "Route was not found." } }, 404);
   })

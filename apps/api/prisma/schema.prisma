@@ -19,6 +19,7 @@ model User {
   chatSessions  ChatSession[]
   customer      Customer?
   orders        Order[]
+  whatsappIdentity WhatsAppIdentity?
 }
 
 model Session {
@@ -72,6 +73,11 @@ enum OrderStatus {
 enum OrderSource {
   HISTORICAL
   AGENT
+}
+
+enum WhatsAppWebhookEventStatus {
+  PROCESSING
+  PROCESSED
 }
 
 model Category {
@@ -145,6 +151,7 @@ model ChatSession {
   updatedAt     DateTime            @updatedAt
   drafts        DraftOrder[]
   orders        Order[]
+  whatsappIdentity WhatsAppIdentity?
 
   @@index([userId, updatedAt])
 }
@@ -270,6 +277,25 @@ model IdempotencyRecord {
   orderId     String   @unique
   order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
+}
+
+model WhatsAppWebhookEvent {
+  id            String                        @id @default(cuid())
+  metaMessageId String                        @unique
+  status        WhatsAppWebhookEventStatus    @default(PROCESSING)
+  createdAt     DateTime                      @default(now())
+  processedAt   DateTime?
+}
+
+model WhatsAppIdentity {
+  id            String      @id @default(cuid())
+  senderHash    String      @unique
+  userId        String      @unique
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chatSessionId String      @unique
+  chatSession   ChatSession @relation(fields: [chatSessionId], references: [id], onDelete: Cascade)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 model AgentMemorySession {

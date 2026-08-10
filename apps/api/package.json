@@ -14,7 +14,9 @@
     "db:seed": "prisma db seed",
     "db:studio": "pnpm with-env prisma studio",
     "start": "pnpm with-env tsx src/main.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify:focused": "tsx --test src/modules/whatsapp/router.test.ts src/verification/business-flow.test.ts",
+    "verify:whatsapp": "tsx --test src/modules/whatsapp/router.test.ts"
   },
   "dependencies": {
     "@anvia/memory-prisma": "^0.2.4",

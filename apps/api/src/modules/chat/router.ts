@@ -1,13 +1,5 @@
 import { createEventStream } from "@anvia/server";
 import { zValidator } from "@hono/zod-validator";
-import {
-  createConfiguredModel,
-  createResellerOrderAgent,
-  getAgentTracing,
-  ResellerApiClient,
-  resellerTraceOptions,
-} from "@repo/agent";
-import { agentApiConfig } from "@repo/config";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { anonymousUserId } from "../../anonymous-user";
@@ -21,6 +13,7 @@ import {
   getLastUserMessageText,
   MAX_CHAT_BODY_BYTES,
 } from "./schema";
+import { runAgentTurn } from "./service";
 
 export const chatRouter = new Hono()
   .get(
@@ -54,26 +47,12 @@ export const chatRouter = new Hono()
       const { sessionId } = c.req.valid("param");
       await requireOwnedChatSession(prisma, sessionId, anonymousUserId);
 
-      const apiClient = new ResellerApiClient({
-        baseUrl: agentApiConfig.internalUrl,
+      const stream = runAgentTurn({
+        message: getLastUserMessageText(c.req.valid("json")),
+        responseMode: "stream",
         sessionId,
+        userId: anonymousUserId,
       });
-      const tracing = getAgentTracing();
-      const agent = createResellerOrderAgent({
-        apiClient,
-        memory: chatMemory,
-        model: createConfiguredModel(),
-        tracing,
-      });
-      const userMessage = {
-        content: [{ text: getLastUserMessageText(c.req.valid("json")), type: "text" as const }],
-        role: "user" as const,
-      };
-      const stream = agent
-        .session(sessionId, { userId: anonymousUserId })
-        .prompt(userMessage)
-        .withTrace(resellerTraceOptions({ sessionId }))
-        .stream();
 
       return createEventStream(safeChatStream(stream), { format: "jsonl" });
     },

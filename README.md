@@ -2,6 +2,9 @@
 
 A focused ordering workspace built as a pnpm monorepo. It uses one shared anonymous profile so visitors can open the platform and agent without signing in.
 
+Production deployment uses public GHCR images, the VPS-wide Caddy proxy, and automatic deployment
+from `main`. See [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Workspace
 
 - `apps/api`: Hono, Prisma, PostgreSQL, CORS, and the anonymous profile/order API.
@@ -118,13 +121,16 @@ For PostgreSQL only during local development:
 docker compose -f docker-compose.dev.yaml up -d
 ```
 
-For the production-style API, PostgreSQL, and Caddy-served Platform path:
+For a local production-style API, PostgreSQL, and Caddy-served Platform path:
 
 ```bash
 docker compose up --build
 ```
 
 Caddy serves the compiled Platform, proxies the API hostname, and is the only public container. The API and PostgreSQL stay on the internal Compose network.
+
+Do not use the root `docker-compose.yaml` on the multi-application VPS because it claims host ports
+80 and 443. VPS production uses `deploy/compose.prod.yaml` behind the existing global Caddy proxy.
 
 ## Project tree
 

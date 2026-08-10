@@ -15,6 +15,10 @@ const logLevelSchema = z
   .enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])
   .default("info");
 const modelProviderSchema = z.enum(["openai"]).default("openai");
+const booleanStringSchema = z
+  .enum(["true", "false"])
+  .default("false")
+  .transform((value) => value === "true");
 const optionalStringSchema = z.preprocess(
   (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
   z.string().trim().optional(),
@@ -32,26 +36,52 @@ const serverEnvSchema = z
     LANGFUSE_PUBLIC_KEY: optionalStringSchema,
     LANGFUSE_SECRET_KEY: optionalStringSchema,
     LOG_LEVEL: logLevelSchema,
+    META_WHATSAPP_ACCESS_TOKEN: optionalStringSchema,
+    META_WHATSAPP_APP_SECRET: optionalStringSchema,
+    META_WHATSAPP_GRAPH_API_VERSION: optionalStringSchema,
+    META_WHATSAPP_PHONE_NUMBER_ID: optionalStringSchema,
+    META_WHATSAPP_VERIFY_TOKEN: optionalStringSchema,
     MODEL_NAME: z.string().trim().min(1).default("gpt-4.1-mini"),
     MODEL_PROVIDER: modelProviderSchema,
     OPENAI_API_KEY: optionalStringSchema,
     OPENAI_BASE_URL: optionalStringSchema.pipe(z.string().url().optional()),
     PLATFORM_URL: z.string().trim().url().default(defaultPlatformUrl),
+    WHATSAPP_ENABLED: booleanStringSchema,
+    WHATSAPP_IDENTITY_HMAC_SECRET: optionalStringSchema,
   })
   .superRefine((env, context) => {
-    if (env.NODE_ENV !== "production") {
+    if (env.NODE_ENV === "production") {
+      for (const [key, value] of [
+        ["OPENAI_API_KEY", env.OPENAI_API_KEY],
+        ["LANGFUSE_PUBLIC_KEY", env.LANGFUSE_PUBLIC_KEY],
+        ["LANGFUSE_SECRET_KEY", env.LANGFUSE_SECRET_KEY],
+      ] as const) {
+        if (!value) {
+          context.addIssue({
+            code: "custom",
+            message: `${key} is required in production.`,
+            path: [key],
+          });
+        }
+      }
+    }
+
+    if (!env.WHATSAPP_ENABLED) {
       return;
     }
 
     for (const [key, value] of [
-      ["OPENAI_API_KEY", env.OPENAI_API_KEY],
-      ["LANGFUSE_PUBLIC_KEY", env.LANGFUSE_PUBLIC_KEY],
-      ["LANGFUSE_SECRET_KEY", env.LANGFUSE_SECRET_KEY],
+      ["META_WHATSAPP_VERIFY_TOKEN", env.META_WHATSAPP_VERIFY_TOKEN],
+      ["META_WHATSAPP_APP_SECRET", env.META_WHATSAPP_APP_SECRET],
+      ["META_WHATSAPP_ACCESS_TOKEN", env.META_WHATSAPP_ACCESS_TOKEN],
+      ["META_WHATSAPP_PHONE_NUMBER_ID", env.META_WHATSAPP_PHONE_NUMBER_ID],
+      ["META_WHATSAPP_GRAPH_API_VERSION", env.META_WHATSAPP_GRAPH_API_VERSION],
+      ["WHATSAPP_IDENTITY_HMAC_SECRET", env.WHATSAPP_IDENTITY_HMAC_SECRET],
     ] as const) {
       if (!value) {
         context.addIssue({
           code: "custom",
-          message: `${key} is required in production.`,
+          message: `${key} is required when WhatsApp is enabled.`,
           path: [key],
         });
       }
@@ -105,6 +135,16 @@ export const modelConfig = {
 
 export const platformConfig = {
   url: env.PLATFORM_URL,
+} as const;
+
+export const whatsappConfig = {
+  accessToken: env.META_WHATSAPP_ACCESS_TOKEN,
+  appSecret: env.META_WHATSAPP_APP_SECRET,
+  enabled: env.WHATSAPP_ENABLED,
+  graphApiVersion: env.META_WHATSAPP_GRAPH_API_VERSION,
+  identityHmacSecret: env.WHATSAPP_IDENTITY_HMAC_SECRET,
+  phoneNumberId: env.META_WHATSAPP_PHONE_NUMBER_ID,
+  verifyToken: env.META_WHATSAPP_VERIFY_TOKEN,
 } as const;
 
 function parseCsv(value: string) {

@@ -49,3 +49,8 @@ FROM caddy:2-alpine AS caddy
 
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=build /app/apps/platform/dist /srv/platform
+
+FROM caddy:2-alpine AS platform
+
+COPY Caddyfile.platform /etc/caddy/Caddyfile
+COPY --from=build /app/apps/platform/dist /srv/platform
