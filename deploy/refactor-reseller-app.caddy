@@ -1,0 +1,7 @@
+reseller.azarnuzy.com {
+	reverse_proxy refactor-reseller-platform:80
+}
+
+api.reseller.azarnuzy.com {
+	reverse_proxy refactor-reseller-api:8000
+}

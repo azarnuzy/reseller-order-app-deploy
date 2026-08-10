@@ -1,5 +1,9 @@
 node_modules
 **/node_modules
+.git
+.github
+.agents
+.codex
 dist
 **/dist
 build
@@ -9,3 +13,5 @@ coverage
 .env
 .env.*
 !.env.example
+deploy
+DEPLOYMENT.md

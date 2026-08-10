@@ -1,0 +1,125 @@
+name: refactor-reseller-app
+
+x-api-environment: &api-environment
+  NODE_ENV: production
+  API_PORT: "8000"
+  API_URL: "https://api.reseller.azarnuzy.com"
+  PLATFORM_URL: "https://reseller.azarnuzy.com"
+  CLIENT_ORIGINS: "https://reseller.azarnuzy.com"
+  DATABASE_URL: "${DATABASE_URL:?Set DATABASE_URL in env.production}"
+  INTERNAL_AGENT_API_URL: "http://api:8000"
+  LOG_LEVEL: "${LOG_LEVEL:-info}"
+  MODEL_PROVIDER: "${MODEL_PROVIDER:-openai}"
+  MODEL_NAME: "${MODEL_NAME:-gpt-4.1-mini}"
+  AGENT_RELEASE: "${IMAGE_TAG:?Set IMAGE_TAG through deploy.sh}"
+  OPENAI_API_KEY: "${OPENAI_API_KEY:?Set OPENAI_API_KEY in env.production}"
+  OPENAI_BASE_URL: "${OPENAI_BASE_URL:-}"
+  LANGFUSE_BASE_URL: "${LANGFUSE_BASE_URL:-https://cloud.langfuse.com}"
+  LANGFUSE_PUBLIC_KEY: "${LANGFUSE_PUBLIC_KEY:?Set LANGFUSE_PUBLIC_KEY in env.production}"
+  LANGFUSE_SECRET_KEY: "${LANGFUSE_SECRET_KEY:?Set LANGFUSE_SECRET_KEY in env.production}"
+  WHATSAPP_ENABLED: "${WHATSAPP_ENABLED:-false}"
+  META_WHATSAPP_VERIFY_TOKEN: "${META_WHATSAPP_VERIFY_TOKEN:-}"
+  META_WHATSAPP_APP_SECRET: "${META_WHATSAPP_APP_SECRET:-}"
+  META_WHATSAPP_ACCESS_TOKEN: "${META_WHATSAPP_ACCESS_TOKEN:-}"
+  META_WHATSAPP_PHONE_NUMBER_ID: "${META_WHATSAPP_PHONE_NUMBER_ID:-}"
+  META_WHATSAPP_GRAPH_API_VERSION: "${META_WHATSAPP_GRAPH_API_VERSION:-}"
+  WHATSAPP_IDENTITY_HMAC_SECRET: "${WHATSAPP_IDENTITY_HMAC_SECRET:-}"
+
+x-api-service: &api-service
+  image: "ghcr.io/azarnuzy/reseller-order-app-agent-api:${IMAGE_TAG:?Set IMAGE_TAG through deploy.sh}"
+  environment:
+    <<: *api-environment
+  networks:
+    - internal
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:?Set POSTGRES_USER in env.production}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in env.production}"
+      POSTGRES_DB: "${POSTGRES_DB:?Set POSTGRES_DB in env.production}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - internal
+
+  migrate:
+    <<: *api-service
+    restart: "no"
+    command: ["pnpm", "--filter", "@repo/api", "exec", "prisma", "migrate", "deploy"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles: ["tools"]
+
+  seed:
+    <<: *api-service
+    restart: "no"
+    command: ["pnpm", "--filter", "@repo/api", "db:seed"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles: ["tools"]
+
+  api:
+    <<: *api-service
+    restart: unless-stopped
+    command: ["pnpm", "--filter", "@repo/api", "exec", "tsx", "src/main.ts"]
+    expose:
+      - "8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:8000/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    networks:
+      proxy:
+        aliases:
+          - refactor-reseller-api
+      internal:
+
+  platform:
+    image: "ghcr.io/azarnuzy/reseller-order-app-agent-platform:${IMAGE_TAG:?Set IMAGE_TAG through deploy.sh}"
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--output-document=-", "http://127.0.0.1/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
+    networks:
+      proxy:
+        aliases:
+          - refactor-reseller-platform
+
+volumes:
+  postgres_data:
+
+networks:
+  proxy:
+    external: true
+  internal:
+    internal: true
