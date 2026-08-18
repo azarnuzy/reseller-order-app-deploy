@@ -121,7 +121,4 @@ export type ToolErrorResult = {
   retryable: boolean;
 };
 
-export type ToolEnvelope =
-  | { data: unknown; ok: true }
-  | { error: ToolErrorResult; ok: false };
-
+export type ToolEnvelope = { data: unknown; ok: true } | { error: ToolErrorResult; ok: false };

@@ -7,7 +7,13 @@ import {
   useChat,
 } from "@anvia/react";
 import { ChatProvider, Composer, Message, Thread } from "@anvia/react-ui";
-import { AlertCircleIcon, BotIcon, ChevronDownIcon, LoaderCircleIcon, SendIcon } from "lucide-react";
+import {
+  AlertCircleIcon,
+  BotIcon,
+  ChevronDownIcon,
+  LoaderCircleIcon,
+  SendIcon,
+} from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { ChatBootstrap } from "../order-chat-types";
 import { orderChatApiBaseUrl } from "../order-chat-api";
@@ -112,7 +118,9 @@ export function OrderChatConversation({
             <span className="grid size-16 place-items-center rounded-2xl bg-blue-600 text-white shadow-xl shadow-blue-600/20">
               <BotIcon className="size-8" />
             </span>
-            <h2 className="mt-5 text-2xl font-bold text-slate-950">What would you like to order?</h2>
+            <h2 className="mt-5 text-2xl font-bold text-slate-950">
+              What would you like to order?
+            </h2>
             <p className="mt-2 max-w-lg text-sm leading-6 text-slate-500">
               Search the live catalog, compare products, and complete a verified reseller order in
               one conversation.
@@ -159,44 +167,44 @@ export function OrderChatConversation({
                       }}
                     >
                       {(part) => {
-                      if (part.type === "text") {
-                        return (
-                          <Message.Markdown
-                            className="order-message-markdown"
-                            components={{
-                              a: ({ children, ...props }) => (
-                                <a {...props} rel="noreferrer" target="_blank">
-                                  {children}
-                                </a>
-                              ),
-                            }}
-                          />
-                        );
-                      }
-
-                      if (part.type === "tool") {
-                        if (!shouldRenderToolPart(chat.messages, messageIndex, part)) {
-                          return null;
+                        if (part.type === "text") {
+                          return (
+                            <Message.Markdown
+                              className="order-message-markdown"
+                              components={{
+                                a: ({ children, ...props }) => (
+                                  <a {...props} rel="noreferrer" target="_blank">
+                                    {children}
+                                  </a>
+                                ),
+                              }}
+                            />
+                          );
                         }
 
-                        return (
-                          <ToolResultCard
-                            disabled={busy}
-                            onQueueMessage={queueMessage}
-                            part={part}
-                          />
-                        );
-                      }
+                        if (part.type === "tool") {
+                          if (!shouldRenderToolPart(chat.messages, messageIndex, part)) {
+                            return null;
+                          }
 
-                      if (part.type === "error") {
-                        return (
-                          <div className="order-inline-error" role="alert">
-                            <AlertCircleIcon className="size-4" /> {part.error.message}
-                          </div>
-                        );
-                      }
+                          return (
+                            <ToolResultCard
+                              disabled={busy}
+                              onQueueMessage={queueMessage}
+                              part={part}
+                            />
+                          );
+                        }
 
-                      return null;
+                        if (part.type === "error") {
+                          return (
+                            <div className="order-inline-error" role="alert">
+                              <AlertCircleIcon className="size-4" /> {part.error.message}
+                            </div>
+                          );
+                        }
+
+                        return null;
                       }}
                     </Message.Parts>
                   </Message.Content>
@@ -298,18 +306,14 @@ function shouldRenderMessage(messages: UIMessage[], messageIndex: number) {
   });
 }
 
-function shouldRenderToolPart(
-  messages: UIMessage[],
-  messageIndex: number,
-  part: ToolMessagePart,
-) {
+function shouldRenderToolPart(messages: UIMessage[], messageIndex: number, part: ToolMessagePart) {
   const toolsInTurn = getToolsInTurn(messages, messageIndex);
 
-  // Reading a draft is an internal prerequisite for validation. When both happen
-  // in one user turn, only the validation UI should be shown to avoid presenting
-  // two competing actions (and, previously, two recipient forms).
+  // Reading or mutating a draft is an internal prerequisite for validation. When
+  // validation follows in the same user turn, show its recipient form instead of
+  // also presenting a competing draft action card.
   if (
-    part.toolName === "getActiveDraft" &&
+    ["addDraftItem", "getActiveDraft"].includes(part.toolName) &&
     toolsInTurn.some((candidate) => candidate.toolName === "validateDraft")
   ) {
     return false;
