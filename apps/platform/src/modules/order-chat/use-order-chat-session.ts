@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createOrderChatBootstrap, loadOrderChatSession } from "./order-chat-api";
+import {
+  createOrderChatBootstrap,
+  deleteOrderChatSession,
+  loadOrderChatSession,
+} from "./order-chat-api";
 import type { ChatBootstrap, StoredChatSession } from "./order-chat-types";
 
 const ACTIVE_SESSION_KEY = "reseller-order:active-session";
@@ -23,6 +27,8 @@ export function useOrderChatSession() {
   const [conversationKey, setConversationKey] = useState(
     () => readStorage(ACTIVE_SESSION_KEY) ?? createClientConversationKey(),
   );
+  const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string>();
   const [state, setState] = useState<SessionState>(() => ({
     loading: Boolean(readStorage(ACTIVE_SESSION_KEY)),
   }));
@@ -58,6 +64,7 @@ export function useOrderChatSession() {
 
   const startNewConversation = useCallback(() => {
     pendingCreation.current = null;
+    setDeleteError(undefined);
     removeStorage(ACTIVE_SESSION_KEY);
     setActiveSessionId(null);
     setSessionToLoad(null);
@@ -66,6 +73,7 @@ export function useOrderChatSession() {
   }, []);
 
   const selectSession = useCallback((sessionId: string) => {
+    setDeleteError(undefined);
     writeStorage(ACTIVE_SESSION_KEY, sessionId);
     setConversationKey(sessionId);
     setActiveSessionId(sessionId);
@@ -113,10 +121,46 @@ export function useOrderChatSession() {
     });
   }, []);
 
+  const deleteSession = useCallback(
+    async (sessionId: string) => {
+      if (deletingSessionId) return;
+
+      setDeletingSessionId(sessionId);
+      setDeleteError(undefined);
+      try {
+        await deleteOrderChatSession(sessionId);
+        setSessions((current) => {
+          const next = current.filter((session) => session.id !== sessionId);
+          storeSessions(next);
+          return next;
+        });
+
+        if (activeSessionId === sessionId) {
+          pendingCreation.current = null;
+          removeStorage(ACTIVE_SESSION_KEY);
+          setActiveSessionId(null);
+          setSessionToLoad(null);
+          setConversationKey(createClientConversationKey());
+          setState({ loading: false });
+        }
+      } catch (error) {
+        setDeleteError(
+          error instanceof Error ? error.message : "We couldn't delete this conversation.",
+        );
+      } finally {
+        setDeletingSessionId(null);
+      }
+    },
+    [activeSessionId, deletingSessionId],
+  );
+
   return {
     ...state,
     activeSessionId,
     conversationKey,
+    deleteError,
+    deleteSession,
+    deletingSessionId,
     ensureSession,
     nameSessionFromMessage,
     selectSession,
