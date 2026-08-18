@@ -17,6 +17,21 @@ export async function createOrderChatSession(): Promise<ChatSession> {
   return body.session;
 }
 
+export async function deleteOrderChatSession(sessionId: string): Promise<void> {
+  const response = await fetch(
+    `${orderChatApiBaseUrl}/api/chat/sessions/${encodeURIComponent(sessionId)}`,
+    { method: "DELETE" },
+  );
+
+  // A missing server-side session is already deleted; still remove its stale
+  // browser history entry.
+  if (response.status === 404) return;
+
+  if (!response.ok) {
+    throw new Error("We couldn't delete this conversation.");
+  }
+}
+
 export async function loadOrderChatSession(sessionId: string): Promise<ChatBootstrap> {
   const response = await fetch(
     `${orderChatApiBaseUrl}/api/chat/sessions/${encodeURIComponent(sessionId)}/messages`,
@@ -46,4 +61,3 @@ export async function createOrderChatBootstrap(): Promise<ChatBootstrap> {
   const session = await createOrderChatSession();
   return { initialMessages: [], session };
 }
-

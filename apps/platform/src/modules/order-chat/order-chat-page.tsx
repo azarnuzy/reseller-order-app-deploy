@@ -15,6 +15,9 @@ export function OrderChatPage() {
     activeSessionId,
     bootstrap,
     conversationKey,
+    deleteError,
+    deleteSession,
+    deletingSessionId,
     ensureSession,
     error,
     loading,
@@ -32,9 +35,12 @@ export function OrderChatPage() {
     <div className="order-app-frame">
       <ConversationSidebar
         activeSessionId={activeSessionId}
+        deleteError={deleteError}
+        deletingSessionId={deletingSessionId}
         mobileOpen={mobileSidebarOpen}
         onClose={() => setMobileSidebarOpen(false)}
         onNewConversation={startNewConversation}
+        onDeleteSession={deleteSession}
         onSelectSession={selectSession}
         sessions={sessions}
         user={user.data}

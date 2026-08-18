@@ -19,7 +19,7 @@ import {
 } from "@repo/ui/components/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "@tanstack/react-router";
-import { MessageSquareIcon, ShoppingBagIcon, UserRoundIcon } from "lucide-react";
+import { MessageSquareIcon, ShieldCheckIcon, ShoppingBagIcon, UserRoundIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { currentUserQueryOptions } from "../profile/hooks/use-profile";
 import { HeaderControls } from "./header-controls";
@@ -36,6 +36,7 @@ export function PlatformAppShell({ children }: { children: ReactNode }) {
   const navItems = [
     { icon: MessageSquareIcon, label: t("nav.orderChat"), to: "/" },
     { icon: UserRoundIcon, label: t("nav.profile"), to: "/profile" },
+    { icon: ShieldCheckIcon, label: t("nav.privacy"), to: "/privacy" },
   ] as const;
 
   return (

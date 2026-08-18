@@ -78,9 +78,7 @@ export function ToolResultCard({ disabled, onQueueMessage, part }: ToolResultCar
   }
 
   if (part.toolName === "getProductDetail" && isProduct(data)) {
-    return (
-      <ProductDetailCard disabled={disabled} onQueueMessage={onQueueMessage} product={data} />
-    );
+    return <ProductDetailCard disabled={disabled} onQueueMessage={onQueueMessage} product={data} />;
   }
 
   if (part.toolName === "checkProductAvailability" && isAvailability(data)) {
@@ -102,33 +100,19 @@ export function ToolResultCard({ disabled, onQueueMessage, part }: ToolResultCar
     }
 
     if (isDraft(data)) {
-      return (
-        <DraftCard
-          disabled={disabled}
-          draft={data}
-          onQueueMessage={onQueueMessage}
-        />
-      );
+      return <DraftCard disabled={disabled} draft={data} onQueueMessage={onQueueMessage} />;
     }
   }
 
   if (part.toolName === "validateDraft" && isDraftValidation(data)) {
     return (
-      <DraftValidationCard
-        disabled={disabled}
-        onQueueMessage={onQueueMessage}
-        validation={data}
-      />
+      <DraftValidationCard disabled={disabled} onQueueMessage={onQueueMessage} validation={data} />
     );
   }
 
   if (part.toolName === "getOrderSummary" && isOrderSummary(data)) {
     return (
-      <ConfirmationSummaryCard
-        disabled={disabled}
-        onQueueMessage={onQueueMessage}
-        summary={data}
-      />
+      <ConfirmationSummaryCard disabled={disabled} onQueueMessage={onQueueMessage} summary={data} />
     );
   }
 
@@ -357,7 +341,9 @@ function QuantityControl({
 function AvailabilityCard({ availability }: { availability: Availability }) {
   const available = availability.status === "AVAILABLE";
   return (
-    <section className={`order-tool-card order-status-card ${available ? "is-success" : "is-warning"}`}>
+    <section
+      className={`order-tool-card order-status-card ${available ? "is-success" : "is-warning"}`}
+    >
       {available ? <CheckCircle2Icon className="size-5" /> : <AlertCircleIcon className="size-5" />}
       <div>
         <p className="font-semibold">{availabilityLabel(availability.status)}</p>
@@ -390,13 +376,16 @@ function DraftCard({
     );
   }
 
+  const missingCustomer = hasMissingCustomer(draft);
+
   return (
     <section className="order-tool-card p-5 sm:p-6">
       <header className="flex items-start justify-between gap-4">
         <div>
           <h3 className="text-lg font-bold text-slate-950">Order draft</h3>
           <p className="text-sm text-slate-500">
-            Version {draft.version} · {draft.items.length} product{draft.items.length === 1 ? "" : "s"}
+            Version {draft.version} · {draft.items.length} product
+            {draft.items.length === 1 ? "" : "s"}
           </p>
         </div>
         <Badge className="bg-blue-50 text-blue-700">Active draft</Badge>
@@ -412,17 +401,18 @@ function DraftCard({
         ))}
       </div>
       {draft.items.length ? <TotalsTable totals={draft.totals} /> : null}
-      {draft.items.length ? (
+      {draft.items.length && missingCustomer ? (
+        <div className="mt-5 border-t border-slate-200 pt-5">
+          <CustomerForm disabled={disabled} onQueueMessage={onQueueMessage} />
+        </div>
+      ) : null}
+      {draft.items.length && !missingCustomer ? (
         <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]">
           <Button
             className="bg-blue-600 text-white hover:bg-blue-700"
             disabled={disabled}
             onClick={() =>
-              onQueueMessage(
-                hasMissingCustomer(draft)
-                  ? "Continue my order and help me add the recipient and shipping information."
-                  : "Validate my current draft and prepare the final order summary.",
-              )
+              onQueueMessage("Validate my current draft and prepare the final order summary.")
             }
             type="button"
           >
@@ -438,7 +428,7 @@ function DraftCard({
           </Button>
         </div>
       ) : null}
-      <ComposerQueueHint />
+      {!missingCustomer ? <ComposerQueueHint /> : null}
     </section>
   );
 }
@@ -459,7 +449,11 @@ function DraftLineCard({
       <div className="flex min-w-0 items-center gap-4">
         <div className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-slate-100">
           {item.thumbnail ? (
-            <img alt={item.productTitle} className="size-full object-contain p-2" src={item.thumbnail} />
+            <img
+              alt={item.productTitle}
+              className="size-full object-contain p-2"
+              src={item.thumbnail}
+            />
           ) : (
             <PackageIcon className="size-6 text-slate-400" />
           )}
@@ -518,10 +512,26 @@ function CustomerForm({
 }) {
   const [name, setName] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
-  const [address, setAddress] = useState("");
+  const [streetAddress, setStreetAddress] = useState("");
+  const [rtRw, setRtRw] = useState("");
+  const [village, setVillage] = useState("");
+  const [district, setDistrict] = useState("");
+  const [city, setCity] = useState("");
+  const [province, setProvince] = useState("");
+  const [postalCode, setPostalCode] = useState("");
   const [email, setEmail] = useState("");
   const [note, setNote] = useState("");
-  const complete = name.trim() && whatsapp.trim() && address.trim().length >= 10;
+  const complete = [
+    name,
+    whatsapp,
+    streetAddress,
+    rtRw,
+    village,
+    district,
+    city,
+    province,
+    postalCode,
+  ].every((value) => value.trim());
 
   return (
     <div>
@@ -554,16 +564,66 @@ function CustomerForm({
           />
         </FormField>
         <div className="sm:col-span-2">
-          <FormField label="Shipping address" required>
+          <FormField
+            hint="Include the street and house/building number. Complete every address field below."
+            label="Street and house/building number"
+            required
+          >
             <Textarea
               autoComplete="street-address"
               disabled={disabled}
-              onChange={(event) => setAddress(event.target.value)}
+              onChange={(event) => setStreetAddress(event.target.value)}
+              placeholder="Example: Jl. Kebon Jeruk No. 40"
               rows={3}
-              value={address}
+              value={streetAddress}
             />
           </FormField>
         </div>
+        <FormField hint="Example: 01/03" label="RT/RW" required>
+          <Input
+            disabled={disabled}
+            onChange={(event) => setRtRw(event.target.value)}
+            placeholder="01/03"
+            value={rtRw}
+          />
+        </FormField>
+        <FormField label="Kelurahan" required>
+          <Input
+            disabled={disabled}
+            onChange={(event) => setVillage(event.target.value)}
+            value={village}
+          />
+        </FormField>
+        <FormField label="Kecamatan" required>
+          <Input
+            disabled={disabled}
+            onChange={(event) => setDistrict(event.target.value)}
+            value={district}
+          />
+        </FormField>
+        <FormField label="City / regency" required>
+          <Input
+            disabled={disabled}
+            onChange={(event) => setCity(event.target.value)}
+            value={city}
+          />
+        </FormField>
+        <FormField label="Province" required>
+          <Input
+            disabled={disabled}
+            onChange={(event) => setProvince(event.target.value)}
+            value={province}
+          />
+        </FormField>
+        <FormField label="Postal code" required>
+          <Input
+            autoComplete="postal-code"
+            disabled={disabled}
+            inputMode="numeric"
+            onChange={(event) => setPostalCode(event.target.value)}
+            value={postalCode}
+          />
+        </FormField>
         <FormField label="Email (optional)">
           <Input
             autoComplete="email"
@@ -575,7 +635,11 @@ function CustomerForm({
           />
         </FormField>
         <FormField label="Note (optional)">
-          <Input disabled={disabled} onChange={(event) => setNote(event.target.value)} value={note} />
+          <Input
+            disabled={disabled}
+            onChange={(event) => setNote(event.target.value)}
+            value={note}
+          />
         </FormField>
       </div>
       <Button
@@ -587,7 +651,14 @@ function CustomerForm({
               "Save this recipient information for my current order:",
               `Name: ${name.trim()}`,
               `WhatsApp: ${whatsapp.trim()}`,
-              `Address: ${address.trim()}`,
+              "Complete address:",
+              `- Street and house/building number: ${streetAddress.trim()}`,
+              `- RT/RW: ${rtRw.trim()}`,
+              `- Kelurahan: ${village.trim()}`,
+              `- Kecamatan: ${district.trim()}`,
+              `- City/regency: ${city.trim()}`,
+              `- Province: ${province.trim()}`,
+              `- Postal code: ${postalCode.trim()}`,
               email.trim() ? `Email: ${email.trim()}` : "",
               note.trim() ? `Note: ${note.trim()}` : "",
             ]
@@ -606,10 +677,12 @@ function CustomerForm({
 
 function FormField({
   children,
+  hint,
   label,
   required = false,
 }: {
   children: React.ReactNode;
+  hint?: string;
   label: string;
   required?: boolean;
 }) {
@@ -619,6 +692,7 @@ function FormField({
         {label} {required ? <span className="text-red-500">*</span> : null}
       </Label>
       {children}
+      {hint ? <p className="text-xs leading-5 text-slate-500">{hint}</p> : null}
     </div>
   );
 }
@@ -638,7 +712,9 @@ function DraftValidationCard({
         <CheckCircle2Icon className="size-5" />
         <div className="flex-1">
           <p className="font-semibold">Draft verified</p>
-          <p className="text-sm opacity-75">Prices, quantities, stock, and recipient data are valid.</p>
+          <p className="text-sm opacity-75">
+            Prices, quantities, stock, and recipient data are valid.
+          </p>
         </div>
         <Button
           disabled={disabled}
@@ -709,7 +785,9 @@ function ConfirmationSummaryCard({
             Final review
           </p>
           <h3 className="mt-1 text-lg font-bold text-slate-950">Confirm your order</h3>
-          <p className="text-sm text-slate-500">Authoritative draft version {summary.draftVersion}</p>
+          <p className="text-sm text-slate-500">
+            Authoritative draft version {summary.draftVersion}
+          </p>
         </div>
         <Badge className="bg-blue-50 text-blue-700">Ready to confirm</Badge>
       </header>
@@ -753,15 +831,40 @@ function ConfirmedOrderCard({ order }: { order: ConfirmedOrder }) {
         <span className="grid size-14 place-items-center rounded-full bg-emerald-600 text-white">
           <PackageCheckIcon className="size-7" />
         </span>
-        <h3 className="mt-3 text-xl font-bold text-emerald-700">Order successfully placed</h3>
-        <p className="text-sm text-slate-500">We received your confirmed order.</p>
+        <h3 className="mt-3 text-xl font-bold text-emerald-700">Confirmed order details</h3>
+        <p className="text-sm text-slate-500">{formatDateTime(order.createdAt)}</p>
       </header>
-      <dl className="grid gap-4 p-5 sm:p-6">
+      <dl className="grid gap-4 border-b border-slate-200 p-5 sm:p-6">
         <OrderFact label="Order number" value={order.orderNumber} valueClass="text-blue-600" />
         <OrderFact label="Status" value="CONFIRMED" valueClass="text-emerald-600" />
-        <OrderFact label="Total" value={money(order.totals.total, order.totals.currency)} />
-        <OrderFact label="Customer" value={order.customer.name} />
       </dl>
+      <div className="p-5 sm:p-6">
+        <h4 className="font-semibold text-slate-950">Items</h4>
+        <div className="mt-3 grid gap-3">
+          {order.items.map((item) => (
+            <div className="flex items-start justify-between gap-4 text-sm" key={item.id}>
+              <div className="min-w-0">
+                <p className="font-medium text-slate-800">{item.productTitle}</p>
+                <p className="text-slate-500">
+                  {item.quantity} × {money(item.unitPrice, order.totals.currency)}
+                  {item.sku ? ` · ${item.sku}` : ""}
+                </p>
+              </div>
+              <p className="shrink-0 font-semibold text-slate-950">
+                {money(item.lineTotal, order.totals.currency)}
+              </p>
+            </div>
+          ))}
+        </div>
+        <TotalsTable totals={order.totals} />
+        <div className="mt-5 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
+          <p className="font-semibold text-slate-900">{order.customer.name}</p>
+          <p>{order.customer.whatsapp}</p>
+          {order.customer.email ? <p>{order.customer.email}</p> : null}
+          <p className="mt-1 leading-5">{order.customer.address}</p>
+          {order.customer.note ? <p className="mt-2 italic">Note: {order.customer.note}</p> : null}
+        </div>
+      </div>
     </section>
   );
 }
@@ -814,7 +917,9 @@ function TotalLine({
   valueClass?: string;
 }) {
   return (
-    <div className={`flex items-center justify-between gap-4 ${strong ? "mt-1 text-base font-bold" : ""}`}>
+    <div
+      className={`flex items-center justify-between gap-4 ${strong ? "mt-1 text-base font-bold" : ""}`}
+    >
       <dt className={strong ? "text-slate-950" : "text-slate-500"}>{label}</dt>
       <dd className={`${strong ? "text-lg" : ""} font-semibold ${valueClass}`}>{value}</dd>
     </div>
@@ -1019,6 +1124,13 @@ function money(value: number, currency = "USD") {
   return new Intl.NumberFormat("en-US", { currency, style: "currency" }).format(value);
 }
 
+function formatDateTime(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
 function formatPercent(value: number) {
   return `${value.toFixed(2).replace(/\.00$/, "")}%`;
 }
@@ -1076,6 +1188,7 @@ function friendlyErrorTitle(code: string) {
       DRAFT_VERSION_CONFLICT: "Your draft changed",
       INSUFFICIENT_STOCK: "Not enough stock",
       MINIMUM_ORDER_NOT_MET: "Minimum order not met",
+      ORDER_NOT_FOUND: "Order not found",
       PRODUCT_NOT_ORDERABLE: "Product cannot be ordered",
       PRODUCT_OUT_OF_STOCK: "Product is out of stock",
       TOOL_ERROR: "This step could not be completed",

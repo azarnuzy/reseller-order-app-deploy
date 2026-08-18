@@ -2,9 +2,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/components/avatar"
 import { Button } from "@repo/ui/components/button";
 import { Link } from "@tanstack/react-router";
 import {
+  LoaderCircleIcon,
   MessageSquareTextIcon,
   PlusIcon,
+  ShieldCheckIcon,
   ShoppingBagIcon,
+  Trash2Icon,
   UserRoundIcon,
   XIcon,
 } from "lucide-react";
@@ -13,9 +16,12 @@ import type { StoredChatSession } from "../order-chat-types";
 
 type ConversationSidebarProps = {
   activeSessionId: string | null;
+  deleteError?: string;
+  deletingSessionId: string | null;
   mobileOpen: boolean;
   onClose: () => void;
   onNewConversation: () => void;
+  onDeleteSession: (sessionId: string) => Promise<void>;
   onSelectSession: (sessionId: string) => void;
   sessions: StoredChatSession[];
   user: ProfileUser;
@@ -23,9 +29,12 @@ type ConversationSidebarProps = {
 
 export function ConversationSidebar({
   activeSessionId,
+  deleteError,
+  deletingSessionId,
   mobileOpen,
   onClose,
   onNewConversation,
+  onDeleteSession,
   onSelectSession,
   sessions,
   user,
@@ -76,25 +85,57 @@ export function ConversationSidebar({
           {sessions.map((session) => {
             const active = session.id === activeSessionId;
             return (
-              <button
-                className={`order-session-item ${active ? "is-active" : ""}`}
-                key={session.id}
-                onClick={() => {
-                  onSelectSession(session.id);
-                  onClose();
-                }}
-                type="button"
-              >
-                <MessageSquareTextIcon className="mt-0.5 size-4 shrink-0" />
-                <span className="min-w-0 flex-1 text-left">
-                  <span className="block truncate text-sm font-medium">{session.title}</span>
-                  <span className="mt-0.5 block text-xs text-slate-500">
-                    {formatSessionDate(session.createdAt)}
+              <div className={`order-session-item ${active ? "is-active" : ""}`} key={session.id}>
+                <button
+                  className="order-session-select"
+                  disabled={deletingSessionId === session.id}
+                  onClick={() => {
+                    onSelectSession(session.id);
+                    onClose();
+                  }}
+                  type="button"
+                >
+                  <MessageSquareTextIcon className="mt-0.5 size-4 shrink-0" />
+                  <span className="min-w-0 flex-1 text-left">
+                    <span className="block truncate text-sm font-medium">{session.title}</span>
+                    <span className="mt-0.5 block text-xs text-slate-500">
+                      {formatSessionDate(session.createdAt)}
+                    </span>
                   </span>
-                </span>
-              </button>
+                </button>
+                <button
+                  aria-label={`Delete conversation ${session.title}`}
+                  className="order-session-delete"
+                  disabled={Boolean(deletingSessionId)}
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        `Delete “${session.title}”? The conversation and its active draft will be permanently removed.`,
+                      )
+                    ) {
+                      void onDeleteSession(session.id);
+                    }
+                  }}
+                  title="Delete conversation"
+                  type="button"
+                >
+                  {deletingSessionId === session.id ? (
+                    <LoaderCircleIcon className="size-4 animate-spin" />
+                  ) : (
+                    <Trash2Icon className="size-4" />
+                  )}
+                </button>
+              </div>
             );
           })}
+          {deleteError ? (
+            <p
+              className="mx-2 mt-2 rounded-lg bg-red-500/10 px-3 py-2 text-xs leading-5 text-red-300"
+              role="alert"
+            >
+              {deleteError}
+            </p>
+          ) : null}
         </nav>
 
         <div className="border-t border-white/15 p-4">
@@ -122,6 +163,14 @@ export function ConversationSidebar({
               <span className="block truncate text-xs text-slate-500">Edit shared profile</span>
             </span>
             <UserRoundIcon className="size-4" />
+          </Link>
+          <Link
+            className="mt-1 flex items-center gap-3 rounded-xl px-2 py-2.5 text-sm text-slate-400 hover:bg-white/10 hover:text-white"
+            onClick={onClose}
+            to="/privacy"
+          >
+            <ShieldCheckIcon className="size-4 shrink-0" />
+            <span className="flex-1">Privacy</span>
           </Link>
         </div>
       </aside>

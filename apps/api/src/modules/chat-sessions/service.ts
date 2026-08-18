@@ -12,6 +12,16 @@ export async function createChatSession(userId: string): Promise<ChatSessionResp
   });
 }
 
+export async function deleteChatSession(sessionId: string, userId: string) {
+  await prisma.$transaction(async (transaction) => {
+    await requireOwnedChatSession(transaction, sessionId, userId);
+    await transaction.agentMemorySession.deleteMany({ where: { sessionId } });
+    await transaction.chatSession.delete({ where: { id: sessionId } });
+  });
+
+  return { id: sessionId };
+}
+
 export async function requireOwnedChatSession(
   database: DatabaseClient,
   sessionId: string,
