@@ -229,10 +229,13 @@ export async function confirmOrder(
   throw new HttpError(409, "IDEMPOTENCY_CONFLICT", "Order confirmation could not be serialized.");
 }
 
-export async function getOrder(sessionId: string, userId: string, orderNumber: string) {
+export async function getOrder(_sessionId: string, userId: string, orderNumber: string) {
   const order = await prisma.order.findFirst({
     include: orderInclude,
-    where: { chatSessionId: sessionId, orderNumber, userId },
+    where: {
+      orderNumber: { equals: orderNumber.trim(), mode: "insensitive" },
+      userId,
+    },
   });
   if (!order) throw new HttpError(404, "ORDER_NOT_FOUND", "Order was not found.");
   return orderResponse(order);
