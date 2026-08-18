@@ -26,7 +26,8 @@ export function createOrderTools(client: ResellerApiClient): AnyTool[] {
     }),
     createTool({
       name: "getOrder",
-      description: "Look up one public order number within this trusted customer session.",
+      description:
+        "Look up one public order number owned by the current customer, including orders created in their other conversations.",
       input: getOrderInputSchema,
       output: toolResultSchema(orderSchema),
       execute: ({ orderNumber }) =>
