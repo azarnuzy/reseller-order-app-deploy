@@ -10,3 +10,4 @@ coverage
 artifacts
 docs/*
 plan.md
+.pnpm-store
