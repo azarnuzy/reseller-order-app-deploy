@@ -2,6 +2,7 @@ import { apiConfig } from "@repo/config";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { HttpError } from "./http-error";
+import { catalogRouter } from "./modules/catalog/router";
 import { chatRouter } from "./modules/chat/router";
 import { chatSessionsRouter } from "./modules/chat-sessions/router";
 import { draftsRouter } from "./modules/drafts/router";
@@ -24,6 +25,7 @@ export const app = new Hono()
     return c.json({ ok: true, service: "api" }, 200);
   })
   .route("/profile", profileRouter)
+  .route("/api/catalog", catalogRouter)
   .route("/api/storefront", storefrontRouter)
   .route("/api", productsRouter)
   .route("/api/chat/sessions", chatSessionsRouter)
