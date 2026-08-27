@@ -2,8 +2,13 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { whatsappConfig } from "@repo/config";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
+import type { FinalAgentTurnResult, ProductListSection } from "../chat/service";
 import { runAgentTurn } from "../chat/service";
-import { sendWhatsAppTextMessage } from "./client";
+import {
+  sendWhatsAppProductListMessage,
+  sendWhatsAppProductMessage,
+  sendWhatsAppTextMessage,
+} from "./client";
 import {
   getWhatsAppTextMessages,
   whatsappVerificationQuerySchema,
@@ -31,7 +36,9 @@ export type WhatsAppRouterDependencies = {
   claimEvent(metaMessageId: string): Promise<boolean>;
   markEventProcessed(metaMessageId: string): Promise<void>;
   resolveIdentity(senderId: string): Promise<{ chatSessionId: string; userId: string }>;
-  runFinalAgentTurn(input: FinalAgentTurnInput): Promise<string>;
+  runFinalAgentTurn(input: FinalAgentTurnInput): Promise<FinalAgentTurnResult>;
+  sendProductListMessage(recipient: string, sections: ProductListSection[]): Promise<void>;
+  sendProductMessage(recipient: string, productRetailerId: string): Promise<void>;
   sendTextMessage(recipient: string, text: string): Promise<void>;
 };
 
@@ -45,6 +52,8 @@ const productionDependencies: WhatsAppRouterDependencies = {
   markEventProcessed: markWhatsAppWebhookEventProcessed,
   resolveIdentity: resolveWhatsAppIdentity,
   runFinalAgentTurn: runAgentTurn,
+  sendProductListMessage: sendWhatsAppProductListMessage,
+  sendProductMessage: sendWhatsAppProductMessage,
   sendTextMessage: sendWhatsAppTextMessage,
 };
 
@@ -102,13 +111,30 @@ export function createWhatsAppRouter({
           if (!claimed) continue;
 
           const identity = await dependencies.resolveIdentity(message.senderId);
-          const reply = await dependencies.runFinalAgentTurn({
+          const turn = await dependencies.runFinalAgentTurn({
             message: message.text,
             responseMode: "final",
             sessionId: identity.chatSessionId,
             userId: identity.userId,
           });
-          await dependencies.sendTextMessage(message.senderId, reply);
+          await dependencies.sendTextMessage(message.senderId, turn.text);
+
+          if (turn.productDetail) {
+            try {
+              await dependencies.sendProductMessage(message.senderId, turn.productDetail.sku);
+            } catch {
+              // The text reply already succeeded; a catalog card failure must not undo it.
+            }
+          } else if (turn.productList) {
+            try {
+              await dependencies.sendProductListMessage(
+                message.senderId,
+                turn.productList.sections,
+              );
+            } catch {
+              // The text reply already succeeded; a catalog card failure must not undo it.
+            }
+          }
 
           await dependencies.markEventProcessed(message.metaMessageId);
         }

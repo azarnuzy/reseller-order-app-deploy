@@ -120,6 +120,21 @@ readability check.
 For each package, open its package settings on GitHub, change visibility to **Public**, and rerun the
 failed deploy job. Future deployments need no GHCR credentials on the VPS.
 
+## WhatsApp catalog setup
+
+Once WhatsApp messaging is connected (`META_WHATSAPP_ACCESS_TOKEN`, `META_WHATSAPP_PHONE_NUMBER_ID`,
+etc. are set), sending catalog cards still needs a Meta Commerce Manager catalog wired to the
+product feed at `/api/catalog/feed.csv` and connected to the WhatsApp Business Account. That part is
+manual dashboard work, so run the wizard instead of re-deriving the steps:
+
+```bash
+./scripts/setup-meta-catalog.sh
+```
+
+It walks through creating the catalog, adding the feed, connecting it to WhatsApp, granting the
+system user catalog access, and writes the resulting `META_WHATSAPP_CATALOG_ID` to `.env`. Updating
+`env.production` on the VPS afterward stays a manual step the script prints but does not run.
+
 ## Operations
 
 Check the deployed release:

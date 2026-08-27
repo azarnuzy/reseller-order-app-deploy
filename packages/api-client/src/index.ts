@@ -37,3 +37,19 @@ export async function updateCurrentUserProfile(client: ApiClient, input: UpdateP
 
   return data.user;
 }
+
+export async function fetchProductBySku(client: ApiClient, sku: string) {
+  const response = await client.api.catalog.products[":sku"].$get({ param: { sku } });
+
+  if ((response.status as number) === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error("Failed to load product.");
+  }
+
+  const data = await response.json();
+
+  return data.product;
+}

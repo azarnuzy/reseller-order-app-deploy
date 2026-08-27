@@ -39,8 +39,10 @@ function createHarness() {
     },
     async runFinalAgentTurn(input) {
       agentTurns.push(input);
-      return `Assistant reply: ${input.message}`;
+      return { text: `Assistant reply: ${input.message}` };
     },
+    async sendProductListMessage() {},
+    async sendProductMessage() {},
     async sendTextMessage(recipient, text) {
       sentMessages.push({ recipient, text });
     },

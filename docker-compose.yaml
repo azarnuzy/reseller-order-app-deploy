@@ -38,6 +38,7 @@ services:
       target: caddy
       args:
         VITE_API_URL: "${VITE_API_URL:-http://api.localhost}"
+        VITE_WHATSAPP_BUSINESS_NUMBER: "${VITE_WHATSAPP_BUSINESS_NUMBER:-}"
     image: refactor-reseller-app-platform
     container_name: refactor-reseller-app-caddy
     restart: unless-stopped

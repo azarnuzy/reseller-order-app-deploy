@@ -38,6 +38,7 @@ const serverEnvSchema = z
     LOG_LEVEL: logLevelSchema,
     META_WHATSAPP_ACCESS_TOKEN: optionalStringSchema,
     META_WHATSAPP_APP_SECRET: optionalStringSchema,
+    META_WHATSAPP_CATALOG_ID: optionalStringSchema,
     META_WHATSAPP_GRAPH_API_VERSION: optionalStringSchema,
     META_WHATSAPP_PHONE_NUMBER_ID: optionalStringSchema,
     META_WHATSAPP_VERIFY_TOKEN: optionalStringSchema,
@@ -140,6 +141,7 @@ export const platformConfig = {
 export const whatsappConfig = {
   accessToken: env.META_WHATSAPP_ACCESS_TOKEN,
   appSecret: env.META_WHATSAPP_APP_SECRET,
+  catalogId: env.META_WHATSAPP_CATALOG_ID,
   enabled: env.WHATSAPP_ENABLED,
   graphApiVersion: env.META_WHATSAPP_GRAPH_API_VERSION,
   identityHmacSecret: env.WHATSAPP_IDENTITY_HMAC_SECRET,

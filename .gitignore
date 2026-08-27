@@ -9,5 +9,7 @@ build
 coverage
 artifacts
 docs/*
+!docs/agents/
+!docs/agents/*.md
 plan.md
 .pnpm-store
