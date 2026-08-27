@@ -10,10 +10,15 @@ export class WhatsAppClientError extends Error {
     readonly code: WhatsAppClientErrorCode,
     message: string,
     readonly retryable: boolean,
+    readonly details?: { body: string; status: number },
   ) {
     super(message);
     this.name = "WhatsAppClientError";
   }
+}
+
+async function graphApiErrorDetails(response: Response) {
+  return { body: await response.text().catch(() => ""), status: response.status };
 }
 
 export async function sendWhatsAppTextMessage(recipient: string, text: string): Promise<void> {
@@ -61,6 +66,7 @@ export async function sendWhatsAppTextMessage(recipient: string, text: string): 
       "SEND_FAILED",
       "The WhatsApp message could not be sent.",
       response.status === 429 || response.status >= 500,
+      await graphApiErrorDetails(response),
     );
   }
 }
@@ -120,6 +126,7 @@ export async function sendWhatsAppProductMessage(
       "SEND_FAILED",
       "The WhatsApp product card could not be sent.",
       response.status === 429 || response.status >= 500,
+      await graphApiErrorDetails(response),
     );
   }
 }
@@ -189,6 +196,7 @@ export async function sendWhatsAppProductListMessage(
       "SEND_FAILED",
       "The WhatsApp product list could not be sent.",
       response.status === 429 || response.status >= 500,
+      await graphApiErrorDetails(response),
     );
   }
 }

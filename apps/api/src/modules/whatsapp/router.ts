@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { whatsappConfig } from "@repo/config";
+import { loggerConfig, whatsappConfig } from "@repo/config";
+import { createLogger } from "@repo/logger";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import type { FinalAgentTurnResult, ProductListSection } from "../chat/service";
@@ -22,6 +23,8 @@ import {
 
 const MAX_WHATSAPP_WEBHOOK_BODY_BYTES = 1024 * 1024;
 const META_SIGNATURE_PREFIX = "sha256=";
+
+const logger = createLogger({ ...loggerConfig, service: "whatsapp" });
 
 type WhatsAppRouterConfig = Pick<typeof whatsappConfig, "appSecret" | "enabled" | "verifyToken">;
 
@@ -122,8 +125,12 @@ export function createWhatsAppRouter({
           if (turn.productDetail) {
             try {
               await dependencies.sendProductMessage(message.senderId, turn.productDetail.sku);
-            } catch {
+            } catch (err) {
               // The text reply already succeeded; a catalog card failure must not undo it.
+              logger.error(
+                { err, sku: turn.productDetail.sku },
+                "Failed to send WhatsApp product card",
+              );
             }
           } else if (turn.productList) {
             try {
@@ -131,8 +138,12 @@ export function createWhatsAppRouter({
                 message.senderId,
                 turn.productList.sections,
               );
-            } catch {
+            } catch (err) {
               // The text reply already succeeded; a catalog card failure must not undo it.
+              logger.error(
+                { err, sections: turn.productList.sections },
+                "Failed to send WhatsApp product list",
+              );
             }
           }
 
