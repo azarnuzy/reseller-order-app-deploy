@@ -58,6 +58,15 @@ const resources = {
         },
         title: "Edit profile",
       },
+      product: {
+        back: "Back to order chat",
+        notFound: {
+          description: "We couldn't find a product with this link. It may have been removed.",
+          title: "Product not found",
+        },
+        orderCta: "Order via WhatsApp",
+        whatsappMessage: 'Hi, I would like to order "{{title}}" (SKU: {{sku}}).',
+      },
       privacy: {
         back: "Back to order chat",
         description:
@@ -259,6 +268,15 @@ const resources = {
           title: "Pratinjau",
         },
         title: "Edit profil",
+      },
+      product: {
+        back: "Kembali ke chat pesanan",
+        notFound: {
+          description: "Kami tidak menemukan produk dengan tautan ini. Mungkin sudah dihapus.",
+          title: "Produk tidak ditemukan",
+        },
+        orderCta: "Pesan via WhatsApp",
+        whatsappMessage: 'Halo, saya ingin memesan "{{title}}" (SKU: {{sku}}).',
       },
       privacy: {
         back: "Kembali ke chat pesanan",

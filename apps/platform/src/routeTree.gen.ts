@@ -14,6 +14,7 @@ import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as DataDeletionRouteImport } from './routes/data-deletion'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ProductsSkuRouteImport } from './routes/products.$sku'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -40,6 +41,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProductsSkuRoute = ProductsSkuRouteImport.update({
+  id: '/products/$sku',
+  path: '/products/$sku',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -47,6 +53,7 @@ export interface FileRoutesByFullPath {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/terms': typeof TermsRoute
+  '/products/$sku': typeof ProductsSkuRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByTo {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/terms': typeof TermsRoute
+  '/products/$sku': typeof ProductsSkuRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -62,13 +70,33 @@ export interface FileRoutesById {
   '/privacy': typeof PrivacyRoute
   '/profile': typeof ProfileRoute
   '/terms': typeof TermsRoute
+  '/products/$sku': typeof ProductsSkuRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/data-deletion' | '/privacy' | '/profile' | '/terms'
+  fullPaths:
+    | '/'
+    | '/data-deletion'
+    | '/privacy'
+    | '/profile'
+    | '/terms'
+    | '/products/$sku'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/data-deletion' | '/privacy' | '/profile' | '/terms'
-  id: '__root__' | '/' | '/data-deletion' | '/privacy' | '/profile' | '/terms'
+  to:
+    | '/'
+    | '/data-deletion'
+    | '/privacy'
+    | '/profile'
+    | '/terms'
+    | '/products/$sku'
+  id:
+    | '__root__'
+    | '/'
+    | '/data-deletion'
+    | '/privacy'
+    | '/profile'
+    | '/terms'
+    | '/products/$sku'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -77,6 +105,7 @@ export interface RootRouteChildren {
   PrivacyRoute: typeof PrivacyRoute
   ProfileRoute: typeof ProfileRoute
   TermsRoute: typeof TermsRoute
+  ProductsSkuRoute: typeof ProductsSkuRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -116,6 +145,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/products/$sku': {
+      id: '/products/$sku'
+      path: '/products/$sku'
+      fullPath: '/products/$sku'
+      preLoaderRoute: typeof ProductsSkuRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -125,6 +161,7 @@ const rootRouteChildren: RootRouteChildren = {
   PrivacyRoute: PrivacyRoute,
   ProfileRoute: ProfileRoute,
   TermsRoute: TermsRoute,
+  ProductsSkuRoute: ProductsSkuRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

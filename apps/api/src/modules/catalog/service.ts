@@ -1,8 +1,10 @@
 import type { Product } from "@prisma/client";
 import { platformConfig } from "@repo/config";
+import { HttpError } from "../../http-error";
 import { prisma } from "../../prisma";
+import { productResponse } from "../products/service";
 import { getStorefront } from "../storefront/service";
-import type { CatalogFeedRow } from "./types";
+import type { CatalogFeedRow, CatalogProductResponse } from "./types";
 
 const CSV_HEADER = [
   "id",
@@ -49,6 +51,22 @@ function rowToFields(row: CatalogFeedRow): string[] {
     row.link,
     row.imageLink,
   ];
+}
+
+export async function getCatalogProductBySku(sku: string): Promise<CatalogProductResponse> {
+  const [{ currency }, product] = await Promise.all([
+    getStorefront(),
+    prisma.product.findUnique({
+      include: { category: { select: { slug: true } } },
+      where: { sku },
+    }),
+  ]);
+
+  if (!product) {
+    throw new HttpError(404, "PRODUCT_NOT_FOUND", "Product was not found.", { sku });
+  }
+
+  return { ...productResponse(product), currency };
 }
 
 function productPageUrl(sku: string): string {

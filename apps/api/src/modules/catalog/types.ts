@@ -1,3 +1,5 @@
+import type { ProductResponse } from "../products/types";
+
 export type CatalogFeedRow = {
   id: string;
   title: string;
@@ -8,3 +10,5 @@ export type CatalogFeedRow = {
   link: string;
   imageLink: string;
 };
+
+export type CatalogProductResponse = ProductResponse & { currency: string };

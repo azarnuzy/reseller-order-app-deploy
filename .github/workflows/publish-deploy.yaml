@@ -85,6 +85,7 @@ jobs:
           push: true
           build-args: |
             VITE_API_URL=https://api.reseller.azarnuzy.com
+            VITE_WHATSAPP_BUSINESS_NUMBER=${{ vars.WHATSAPP_BUSINESS_NUMBER }}
           tags: |
             ${{ env.IMAGE_PREFIX }}-${{ matrix.image }}:${{ github.sha }}
             ${{ env.IMAGE_PREFIX }}-${{ matrix.image }}:latest
