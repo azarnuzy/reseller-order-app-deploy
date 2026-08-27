@@ -122,9 +122,15 @@ export function createWhatsAppRouter({
           });
           await dependencies.sendTextMessage(message.senderId, turn.text);
 
+          logger.info(
+            { hasProductDetail: !!turn.productDetail, hasProductList: !!turn.productList },
+            "Agent turn resolved catalog card decision",
+          );
+
           if (turn.productDetail) {
             try {
               await dependencies.sendProductMessage(message.senderId, turn.productDetail.sku);
+              logger.info({ sku: turn.productDetail.sku }, "Sent WhatsApp product card");
             } catch (err) {
               // The text reply already succeeded; a catalog card failure must not undo it.
               logger.error(
@@ -137,6 +143,10 @@ export function createWhatsAppRouter({
               await dependencies.sendProductListMessage(
                 message.senderId,
                 turn.productList.sections,
+              );
+              logger.info(
+                { sections: turn.productList.sections },
+                "Sent WhatsApp product list",
               );
             } catch (err) {
               // The text reply already succeeded; a catalog card failure must not undo it.
