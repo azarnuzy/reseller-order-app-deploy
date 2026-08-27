@@ -329,6 +329,25 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
+  practice/routing-middleware-hono:
+    dependencies:
+      '@hono/zod-validator':
+        specifier: ^0.8.0
+        version: 0.8.0(hono@4.12.34)(zod@4.4.3)
+      hono:
+        specifier: ^4.12.26
+        version: 4.12.34
+      zod:
+        specifier: ^4.4.3
+        version: 4.4.3
+    devDependencies:
+      tsx:
+        specifier: ^4.22.4
+        version: 4.22.4
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
 packages:
 
   '@anvia/core@0.15.0':
@@ -5009,6 +5028,11 @@ snapshots:
   '@hono/zod-validator@0.8.0(hono@4.12.26)(zod@4.4.3)':
     dependencies:
       hono: 4.12.26
+      zod: 4.4.3
+
+  '@hono/zod-validator@0.8.0(hono@4.12.34)(zod@4.4.3)':
+    dependencies:
+      hono: 4.12.34
       zod: 4.4.3
 
   '@hookform/resolvers@5.4.0(react-hook-form@7.80.0(react@19.2.7))':
